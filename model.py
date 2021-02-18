@@ -428,7 +428,7 @@ class IMSEG(object):
 	
 	
 	# -------- quantitative evaluation --------
-	def test_pcSeg(self, FLAGS, epoch=None, inplace=False):
+	def test_pcSeg(self, FLAGS, epoch=None, inplace=False, use_post_processing=True):
 		if not inplace:
 			could_load, checkpoint_counter = self.load(self.checkpoint_dir)
 			if could_load:
@@ -437,6 +437,9 @@ class IMSEG(object):
 			else:
 				print(" [!] Load failed...")
 				return
+		
+		if use_post_processing:
+			from sklearn.neighbors import KDTree
 		
 		num_of_test_shapes = self.test_voxels.shape[0]
 		shape_mIOU = [None] * num_of_test_shapes
@@ -456,6 +459,14 @@ class IMSEG(object):
 					self.point_coord: branch_coord,
 				})
 			pred_part_labels = np.argmax(model_out, axis=1).astype(np.int32)
+			
+			if use_post_processing:
+				valid_labels = np.max(model_out, axis=1)>1e-2
+				valid_branch_coord = branch_coord[valid_labels]
+				valid_pred_part_labels = pred_part_labels[valid_labels]
+				kd_tree = KDTree(valid_branch_coord, leaf_size=8)
+				_, closest_idx = kd_tree.query(branch_coord)
+				pred_part_labels = valid_pred_part_labels[np.reshape(closest_idx,[-1])]
 			
 			#evaluation
 			gtLables = np.argmax(branch_value, axis=1).astype(np.int32)
@@ -624,13 +635,16 @@ class IMSEG(object):
 			print("[sample]")
 	
 	#output colored point cloud
-	def test_pointcloud(self, config):
+	def test_pointcloud(self, config, use_post_processing=True):
 		could_load, checkpoint_counter = self.load(self.checkpoint_dir)
 		if could_load:
 			print(" [*] Load SUCCESS")
 		else:
 			print(" [!] Load failed...")
 			return
+		
+		if use_post_processing:
+			from sklearn.neighbors import KDTree
 		
 		color_list = ["255 0 0","0 255 0","0 0 255","255 255 0","255 0 255","0 255 255","180 180 180", "100 100 100", "255 128 128","128 255 128","128 128 255","255 255 128","255 128 255","128 255 255"]
 		
@@ -651,7 +665,14 @@ class IMSEG(object):
 				
 			label_gt = np.argmax(branch_value, axis=1)
 			label_out = np.argmax(model_out, axis=1)
-			label_max = np.max(model_out, axis=1)
+			
+			if use_post_processing:
+				valid_labels = np.max(model_out, axis=1)>1e-2
+				valid_branch_coord = branch_coord[valid_labels]
+				valid_pred_part_labels = label_out[valid_labels]
+				kd_tree = KDTree(valid_branch_coord, leaf_size=8)
+				_, closest_idx = kd_tree.query(branch_coord)
+				label_out = valid_pred_part_labels[np.reshape(closest_idx,[-1])]
 			
 			#output ply
 			fout = open(config.sample_dir+"/"+str(t)+"_gt.ply", 'w')
@@ -687,39 +708,20 @@ class IMSEG(object):
 				color = color_list[label_out[i]]
 				fout.write(str(branch_coord[i,0])+" "+str(branch_coord[i,1])+" "+str(branch_coord[i,2])+" "+color+"\n")
 			fout.close()
-			'''
-			#output ply
-			fout = open(config.sample_dir+"/"+str(t)+"_out.ply", 'w')
-			fout.write("ply\n")
-			fout.write("format ascii 1.0\n")
-			fout.write("element vertex "+str(len(self.ref_points[t]))+"\n")
-			fout.write("property float x\n")
-			fout.write("property float y\n")
-			fout.write("property float z\n")
-			fout.write("property uchar red\n")
-			fout.write("property uchar green\n")
-			fout.write("property uchar blue\n")
-			fout.write("end_header\n")
-			for i in range(len(self.ref_points[t])):
-				if label_max[i]>0.1:
-					color = color_list[label_out[i]]
-					fout.write(str(self.ref_points[t,i,0])+" "+str(self.ref_points[t,i,1])+" "+str(self.ref_points[t,i,2])+" "+color+"\n")
-				else:
-					fout.write("0 0 0 0 0 0\n")
-			fout.close()
-			'''
-			
-			
+
 			print("[sample]")
 	
 	#output colored mesh
-	def test_obj(self, config):
+	def test_obj(self, config, use_post_processing=True):
 		could_load, checkpoint_counter = self.load(self.checkpoint_dir)
 		if could_load:
 			print(" [*] Load SUCCESS")
 		else:
 			print(" [!] Load failed...")
 			return
+		
+		if use_post_processing:
+			from sklearn.neighbors import KDTree
 		
 		color_list = ["255 0 0","0 255 0","0 0 255","255 255 0","255 0 255","0 255 255","180 180 180", "100 100 100", "255 128 128","128 255 128","128 128 255","255 255 128","255 128 255","128 255 255"]
 		
@@ -764,7 +766,14 @@ class IMSEG(object):
 			model_out = np.concatenate(out_minibatch, axis=0)
 			
 			label_out = np.argmax(model_out, axis=1)
-			label_max = np.max(model_out, axis=1)
+			
+			if use_post_processing:
+				valid_labels = np.max(model_out, axis=1)>1e-2
+				valid_branch_coord = vertices[valid_labels]
+				valid_pred_part_labels = label_out[valid_labels]
+				kd_tree = KDTree(valid_branch_coord, leaf_size=8)
+				_, closest_idx = kd_tree.query(vertices)
+				label_out = valid_pred_part_labels[np.reshape(closest_idx,[-1])]
 			
 			#output ply
 			fout = open(config.sample_dir+"/"+str(t)+"_mesh.ply", 'w')

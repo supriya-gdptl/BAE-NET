@@ -7,8 +7,10 @@ The tensorflow code for paper "BAE-NET: Branched Autoencoder for Shape Co-Segmen
 <img src='img/oneshot.png' />
 
 
-## Introduction
-We treat shape co-segmentation as a representation learning problem and introduce BAE-NET, a branched autoencoder network, for the task. The unsupervised BAE-NET is trained with a collection of un-segmented shapes, using a shape reconstruction loss, without any ground-truth labels. Specifically, the network takes an input shape and encodes it using a convolutional neural network, whereas the decoder concatenates the resulting feature code with a point coordinate and outputs a value indicating whether the point is inside/outside the shape. Importantly, the decoder is branched: each branch learns a compact representation for one commonly recurring part of the shape collection, e.g., airplane wings. By complementing the shape reconstruction loss with a label loss, BAE-NET is easily tuned for one-shot learning. We show unsupervised, weakly supervised, and one-shot learning results by BAE-NET, demonstrating that using only a couple of exemplars, our network can generally outperform state-of-the-art supervised methods trained on hundreds of segmented shapes.
+## Update
+Added a post-processing step to all testing functions, controlled by the flag *use_post_processing*. The default is set to *True*.
+The post-processing step detects query points that have close-to-zero outputs at all branches.
+Those points are not inside any predicted parts, therefore their labels should be considered as invalid ones. We assign the labels of those points by copying the labels of the closest points with valid labels.
 
 ## Citation
 If you find our work useful in your research, please consider citing:
