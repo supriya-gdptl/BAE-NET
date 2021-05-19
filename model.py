@@ -729,8 +729,9 @@ class IMSEG(object):
 		
 		for t in range(min(len(self.data_voxels),16)):
 			obj_name = self.ref_obj_name[t]
-			obj_dir = "F:\\ShapeNetCore.v2\\ShapeNetCore.v2\\"+self.dataset_name[:8]+"\\"+obj_name+"\\models\\model_normalized.obj"
-			
+			#obj_dir = "F:\\ShapeNetCore.v2\\ShapeNetCore.v2\\"+self.dataset_name[:8]+"\\"+obj_name+"\\models\\model_normalized.obj"
+			obj_dir = "../../data/ShapeNetCore.v2/"+self.dataset_name[:8]+"/"+obj_name+"/models/model_normalized.obj"
+
 			vertices, triangles = load_obj(obj_dir)
 			
 			'''
