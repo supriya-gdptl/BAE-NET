@@ -132,3 +132,5 @@ dmypy.json
 *.sh
 *.out
 *.txt
+checkpoint*
+data*
